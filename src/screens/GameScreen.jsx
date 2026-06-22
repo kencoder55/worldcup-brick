@@ -1,9 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import pauseButton from '../assets/images/pause_button.png';
 import timeIcon from '../assets/images/time_icon.png';
 import ballKickSound from '../assets/sound/ball_kick.mp3';
-// import goalAnimation from '../assets/video/goal-animation.mp4';
-import goalAnimation from '../assets/video/goal-animation-480p.mov';
+import goalAnimation from '../assets/video/goal-animation.mp4';
 import { GameWorld } from '../game/GameWorld';
 import { Stage } from '../game/Stage';
 import { useGameStore } from '../store/GameContext';
@@ -14,6 +13,7 @@ export function GameScreen() {
   const [elapsed, setElapsed] = useState(0);
   const [goalTime, setGoalTime] = useState(null);
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
+  const goalVideoRef = useRef(null);
   const buttonClickAudio = useMemo(() => {
     if (typeof Audio === 'undefined') {
       return null;
@@ -59,6 +59,47 @@ export function GameScreen() {
     setShowContinuePrompt(true);
   }, []);
 
+  const handleGoalAnimationError = useCallback(() => {
+    setShowContinuePrompt(true);
+  }, []);
+
+  useEffect(() => {
+    if (goalTime === null) {
+      return;
+    }
+
+    const video = goalVideoRef.current;
+    if (!video) {
+      return;
+    }
+
+    const playVideo = () => {
+      video.currentTime = 0;
+      return video.play();
+    };
+
+    const startPlayback = () => {
+      playVideo()?.catch(() => {
+        video.muted = true;
+        playVideo()?.catch(() => {
+          setShowContinuePrompt(true);
+        });
+      });
+    };
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      startPlayback();
+      return;
+    }
+
+    video.addEventListener('canplay', startPlayback, { once: true });
+    video.load();
+
+    return () => {
+      video.removeEventListener('canplay', startPlayback);
+    };
+  }, [goalTime]);
+
   const handleGoHome = useCallback(() => {
     playButtonClickSound();
     goHome();
@@ -94,20 +135,33 @@ export function GameScreen() {
           </Stage>
         </div>
         {isGoalAnimationVisible ? (
-          <button className="goal-animation-overlay" type="button" onClick={handleContinueToResult}>
+          <div
+            className="goal-animation-overlay"
+            role="button"
+            tabIndex={0}
+            onClick={handleContinueToResult}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleContinueToResult();
+              }
+            }}
+          >
             <video
+              ref={goalVideoRef}
               autoPlay
               className="goal-animation-video"
               playsInline
               preload="auto"
               src={goalAnimation}
               onEnded={handleGoalAnimationEnd}
+              onError={handleGoalAnimationError}
               onTimeUpdate={handleGoalAnimationProgress}
             />
             <span className={`goal-animation-continue ${showContinuePrompt ? 'is-visible' : ''}`}>
               Tap to continue
             </span>
-          </button>
+          </div>
         ) : null}
       </div>
     </main>
