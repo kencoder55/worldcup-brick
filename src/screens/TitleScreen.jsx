@@ -21,6 +21,8 @@ export function TitleScreen() {
           Play Game
         </GameButton>
 
+        
+
         <p className="title-best-time">
           Best Time: <strong>{bestTime ? formatTime(bestTime) : '--:--'}</strong>
         </p>

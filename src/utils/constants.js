@@ -30,7 +30,7 @@ export const BALL_PHASE = {
 export const GAME_RULES = {
   debugMode: false,
   ballRadius: 20,
-  ballSpeed: 500,
+  ballSpeed: 600,
   brickGap: 2,
   brickRows: 5,
   brickCols: 9,
@@ -40,9 +40,9 @@ export const GAME_RULES = {
   enemyGoalLine: 156,
   goalCollisionInset: 180,
   playerGoalLine: 1000,
-  paddleY: 900,
+  paddleY: 800,
   paddleWidth: 100,
   paddleHeight: 20,
   sidePadding: 22,
-  blinkDurationMs: 3000,
+  blinkDurationMs: 1000,
 };
